@@ -1,0 +1,304 @@
+# Upstream sources for the Selection Horizon pipeline.
+#
+# Every entry is pinned to a release or a retrieval date. The ingest layer
+# writes the SHA256 of each retrieved file into data/MANIFEST.json and refuses
+# to continue when a recorded hash no longer matches.
+#
+# redistribute: whether the retrieved bytes may be re-published by this project.
+# Derived aggregates are governed separately in LICENSE-DATA.
+
+open_targets:
+  release: "26.06"
+  base_url: "https://ftp.ebi.ac.uk/pub/databases/opentargets/platform/26.06/output"
+  licence: "CC0-1.0"
+  redistribute: true
+  # Release 26.06 ships EFO 3.88.0, in which a large block of EFO disease terms
+  # was replaced by Mondo terms. The disease index is a mixed namespace even
+  # after that change, so joins are keyed on the Platform identifier as
+  # published and every join asserts its row count.
+  datasets:
+    disease:
+      path: "disease/disease.parquet"
+      layout: single_file
+    target:
+      path: "target"
+      layout: spark_parts
+    evidence_orphanet:
+      path: "evidence_orphanet"
+      layout: spark_parts
+    evidence_gwas_credible_sets:
+      path: "evidence_gwas_credible_sets"
+      layout: spark_parts
+    evidence_eva:
+      path: "evidence_eva"
+      layout: spark_parts
+    evidence_eva_somatic:
+      path: "evidence_eva_somatic"
+      layout: spark_parts
+    evidence_gene_burden:
+      path: "evidence_gene_burden"
+      layout: spark_parts
+    l2g_prediction:
+      path: "l2g_prediction"
+      layout: spark_parts
+    interaction:
+      path: "interaction"
+      layout: spark_parts
+    openfda_significant_adverse_drug_reactions:
+      path: "openfda_significant_adverse_drug_reactions"
+      layout: spark_parts
+    baseline_expression:
+      path: "baseline_expression"
+      layout: spark_parts
+    target_essentiality:
+      path: "target_essentiality"
+      layout: spark_parts
+    target_prioritisation:
+      path: "target_prioritisation"
+      layout: spark_parts
+
+orphanet:
+  version: "en_product, retrieved 2026-08-26"
+  licence: "Orphanet terms of use, attribution required"
+  redistribute: false
+  files:
+    natural_history:
+      url: "https://www.orphadata.com/data/xml/en_product9_ages.xml"
+      note: >
+        Average age of onset intervals and inheritance per ORPHAcode. This
+        product carries no age of death.
+    cross_references:
+      url: "https://www.orphadata.com/data/xml/en_product1.xml"
+      note: "External references to OMIM, ICD-10, MeSH, MedDRA, UMLS, GARD"
+    gene_associations:
+      url: "https://www.orphadata.com/data/xml/en_product6.xml"
+      note: "Gene to disease associations with association type and status"
+    phenotypes:
+      url: "https://www.orphadata.com/data/xml/en_product4.xml"
+      note: >
+        HPO phenotype annotations with a frequency label per association. The
+        severity index weights each annotation by that frequency, which is
+        materially better than treating presence as binary.
+
+hpo:
+  version: "current, retrieved 2026-08-26"
+  licence: "HPO licence, attribution required"
+  redistribute: true
+  files:
+    annotations:
+      url: "https://purl.obolibrary.org/obo/hp/hpoa/phenotype.hpoa"
+      note: "Onset column and HP:0003674 sub-ontology, secondary onset source"
+    ontology:
+      url: "https://purl.obolibrary.org/obo/hp.obo"
+      note: >
+        Term labels for the Age of death branch HP:0011420, which supplies the
+        per-case severity term of the fitness-cost model. Labels are asserted
+        against this file rather than hard coded.
+
+gene_ontology:
+  version: "go-basic, retrieved 2026-08-27"
+  licence: "CC-BY-4.0"
+  redistribute: true
+  files:
+    basic:
+      url: "https://purl.obolibrary.org/obo/go/go-basic.obo"
+      note: >
+        The developmental-process branch marks gene class for the mediation
+        and the positive control. Concepts are declared by name and
+        resolved against this file, never written as identifiers.
+
+mondo:
+  version: "current, retrieved 2026-08-26"
+  licence: "CC-BY-4.0"
+  redistribute: true
+  files:
+    ontology:
+      url: "https://purl.obolibrary.org/obo/mondo.obo"
+
+gnomad:
+  licence: "ODbL-1.0 / free use with attribution"
+  redistribute: true
+  files:
+    constraint_v4:
+      url: "https://storage.googleapis.com/gcp-public-data--gnomad/release/4.1/constraint/gnomad.v4.1.constraint_metrics.tsv"
+      version: "v4.1"
+      note: "Secondary constraint metric. LOEUF, pLI, missense Z."
+    constraint_v2:
+      url: "https://storage.googleapis.com/gcp-public-data--gnomad/release/2.1.1/constraint/gnomad.v2.1.1.lof_metrics.by_gene.txt.bgz"
+      version: "v2.1.1"
+      note: "Robustness arm only, v2 against v4."
+
+genebayes:
+  licence: "CC-BY-4.0"
+  redistribute: true
+  zenodo_record: "10403680"
+  doi: "10.5281/zenodo.10403680"
+  files:
+    s_het:
+      url: "https://zenodo.org/api/records/10403680/files/s_het_estimates.genebayes.tsv/content"
+      note: "Primary constraint metric. Per-gene selection coefficient on heterozygotes."
+    gene_features:
+      url: "https://zenodo.org/api/records/10403680/files/gene_features_for_s_het.tsv.gz/content"
+      note: >
+        The 1,250 gene features GeneBayes fits s_het on. Useful for reference,
+        but its conservation columns (fracCdsPhylopAm, fracCdsPhastConsPr) are
+        inputs to the s_het model and must never serve as the conservation arm
+        of the contrast. Conservation is taken from the UCSC tracks directly.
+
+conservation:
+  licence: "UCSC Genome Browser terms, free for academic use"
+  redistribute: false
+  files:
+    phylop_241way:
+      url: "https://hgdownload.soe.ucsc.edu/goldenPath/hg38/cactus241way/cactus241way.phyloP.bw"
+      assembly: hg38
+      size_bytes: 9644660543
+      note: "Primary conservation metric. Zoonomia 241-way mammalian alignment."
+    phylop_100way:
+      url: "https://hgdownload.soe.ucsc.edu/goldenPath/hg38/phyloP100way/hg38.phyloP100way.bw"
+      assembly: hg38
+      size_bytes: 9870053206
+      note: "Secondary."
+    phastcons_100way:
+      url: "https://hgdownload.soe.ucsc.edu/goldenPath/hg38/phastCons100way/hg38.phastCons100way.bw"
+      assembly: hg38
+      size_bytes: 5886377734
+      note: "Secondary."
+
+gencode:
+  release: "44"
+  licence: "free with attribution"
+  redistribute: true
+  files:
+    annotation:
+      url: "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_44/gencode.v44.basic.annotation.gtf.gz"
+      assembly: hg38
+      note: "Canonical transcript coordinates for conservation aggregation and Evo 2 windows."
+    annotation_grch37:
+      url: "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_44/GRCh37_mapping/gencode.v44lift37.basic.annotation.gtf.gz"
+      assembly: GRCh37
+      note: >
+        Gene spans on GRCh37, used only by the balancing-selection arm, whose
+        scores are on that assembly because 1000 Genomes phase 3 is. Everything
+        else is GRCh38; nothing is lifted over twice.
+    transcripts:
+      url: "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_44/gencode.v44.pc_transcripts.fa.gz"
+      assembly: hg38
+      note: >
+        Protein-coding transcript sequences. Each header carries the CDS
+        interval, which gives CDS length and CDS GC content per gene without
+        pulling the genome.
+    genome:
+      url: "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_44/GRCh38.primary_assembly.genome.fa.gz"
+      assembly: hg38
+      note: >
+        The primary assembly, pulled only for the Evo 2 arm. That arm scores
+        genomic windows, and Evo 2 is pretrained on genomic sequence including
+        introns, so a spliced transcript would be out of distribution. Nothing
+        in the feature matrix reads this file.
+
+minikel_genetic_support:
+  version: "v1.0 (Zenodo 10.5281/zenodo.10783210)"
+  licence: "see upstream repository; Pharmaprojects source data is proprietary"
+  redistribute: false
+  repository: "https://github.com/ericminikel/genetic_support"
+  note: "R 4.2 pipeline. 29,476 target-indication pairs. Runs under gensup_analysis.R."
+
+donertas_2021:
+  licence: "see upstream repository"
+  redistribute: false
+  repository: "https://github.com/mdonertas/ukbb_ageonset"
+  biostudies: "S-BSST407"
+  note: "Onset-cluster assignments for 116 UK Biobank diseases. Prior-art cross-check."
+
+spence_2025:
+  licence: "see upstream repository"
+  redistribute: false
+  repository: "https://github.com/jeffspence/specificity_length_luck"
+  note: "Trait-specificity measures across 209 UK Biobank traits. Pleiotropy covariate."
+
+risteys:
+  release: "R13"
+  url: "https://r13.risteys.finngen.fi/"
+  endpoint_list: "https://r13.risteys.finngen.fi/api/endpoints"
+  endpoint_page: "https://r13.risteys.finngen.fi/endpoints/{endpoint}"
+  n_endpoints: 4891
+  licence: "confirm redistribution terms before depositing derived values"
+  redistribute: false
+  note: >
+    Median age at first event and Aalen-Johansen competing-risks cumulative
+    incidence, death as competing event, sex-stratified, age as timescale.
+    Distribution bars are aggregated to at least five individuals.
+    There is no bulk download. The endpoint list is served as JSON; each
+    endpoint page embeds the age distribution of first events in a
+    data-histogram-values attribute and the cumulative incidence in a
+    data-cif-data attribute. Retrieval is rate limited and cached in the raw
+    layer so that it runs once.
+
+betascan:
+  version: "BetaScan2 standardised B2, Zenodo 10.5281/zenodo.7842447"
+  doi: "10.5281/zenodo.7842447"
+  licence: "CC-BY-4.0"
+  redistribute: false
+  assembly: GRCh37
+  note: >
+    Standardised B2 of Siewert and Voight, computed on 1000 Genomes phase 3 with
+    a 2 kb window. Not filtered for the 1000 Genomes accessibility mask, which is
+    stated in the upstream README and carried into ours.
+  files:
+    CEU:
+      url: "https://zenodo.org/api/records/7842447/files/CEUStdB2.tar.gz/content"
+    YRI:
+      url: "https://zenodo.org/api/records/7842447/files/YRIStdB2.tar.gz/content"
+    CHB:
+      url: "https://zenodo.org/api/records/7842447/files/CHBStdB2.tar.gz/content"
+
+kuan_2019:
+  version: "Lancet Digital Health 2019;1:e63-e77"
+  doi: "10.1016/S2589-7500(19)30012-3"
+  pmcid: "PMC6798263"
+  licence: "CC-BY-4.0"
+  redistribute: true
+  note: >
+    Median age of first record for 308 conditions in 3,872,451 individuals in the
+    English National Health Service, read from supplementary tables S1 and S7A of
+    the appendix. Retrieved through the Europe PMC supplementary-file service,
+    which serves the publisher-deposited appendix under the article's own
+    open-access licence.
+  files:
+    appendix:
+      url: "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC6798263/supplementaryFiles"
+
+demography:
+  hmd:
+    url: "https://www.mortality.org/"
+    licence: "registration required"
+    redistribute: false
+  un_wpp:
+    version: "WPP2024"
+    licence: "CC-BY-3.0-IGO"
+    redistribute: true
+    files:
+      life_table_female:
+        url: "https://population.un.org/wpp/assets/Excel%20Files/1_Indicator%20(Standard)/CSV_FILES/WPP2024_Life_Table_Complete_Medium_Female_1950-2023.csv.gz"
+        note: "Female l(x) on a single-year grid. Survivorship for the selection gradient."
+      fertility_by_age:
+        url: "https://population.un.org/wpp/assets/Excel%20Files/1_Indicator%20(Standard)/CSV_FILES/WPP2024_Fertility_by_Age1.csv.gz"
+        note: >
+          Age-specific fertility rates per 1,000 women on a single-year grid.
+          Divided through to offspring per woman on ingest.
+  forager:
+    source: "Gurven and Kaplan 2007, Population and Development Review 33"
+    note: "Pre-industrial survivorship and fertility schedules, transcribed from the published tables."
+
+evo2:
+  licence: "Apache-2.0 for code; model licence governs the weights"
+  redistribute: false
+  models:
+    primary: "arcinstitute/evo2_7b"
+    cross_check: "arcinstitute/evo2_1b_base"
+  note: >
+    Scored through the hosted 40B endpoint rather than locally: the available
+    GPU is an RTX A4000 at compute capability 8.6, below the 8.9 the FP8 path
+    requires and short of the memory a 20B checkpoint needs. The arm did not
+    reproduce the published benchmark and contributes no score.

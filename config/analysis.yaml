@@ -1,0 +1,295 @@
+# Analysis specification.
+#
+# This file is frozen at pre-registration. After that point any change requires
+# a statement in the paper, and the pull request that
+# changes this file must link to it.
+
+seed: 20260826
+
+onset:
+  # Orphanet interval categories, ordinal rank and midpoint age in years.
+  # Midpoints follow the interval definitions in the Orphanet natural-history
+  # product; "all ages" carries no midpoint and is excluded from continuous
+  # models.
+  t1a_intervals:
+    antenatal:   {rank: 0, midpoint: -0.4}
+    neonatal:    {rank: 1, midpoint: 0.04}
+    infancy:     {rank: 2, midpoint: 0.5}
+    childhood:   {rank: 3, midpoint: 6.0}
+    adolescent:  {rank: 4, midpoint: 15.0}
+    adult:       {rank: 5, midpoint: 40.0}
+    elderly:     {rank: 6, midpoint: 72.0}
+    all ages:    {rank: null, midpoint: null}
+  # A disease may carry several intervals. The primary encoding is the earliest,
+  # which matches the quantity selection acts on. The sensitivity encoding is
+  # the midpoint of the span between the earliest and latest interval.
+  multi_label_rule: earliest
+  sensitivity_rule: span_midpoint
+  # Decade bins for the complex-disease tiers.
+  t2_t3_bins: [0, 10, 20, 30, 40, 50, 60, 70, 100]
+
+  # The realised Mendelian distribution does not support seven levels. The
+  # seven Orphanet intervals collapse to five before any score is inspected.
+  # Two things drive the collapse and both are stated so that neither reads as
+  # a post-hoc convenience:
+  #   Antenatal and neonatal merge because both lie far before first
+  #   reproduction, so the distinction carries no selection-relevant
+  #   information.
+  #   Any bin holding fewer than min_diseases is merged into the adjacent bin,
+  #   which is what absorbs elderly into adult.
+  collapse:
+    min_diseases: 50
+    map:
+      antenatal: perinatal
+      neonatal: perinatal
+      infancy: infancy
+      childhood: childhood
+      adolescent: adolescent
+      adult: adult
+      elderly: adult
+    order: [perinatal, infancy, childhood, adolescent, adult]
+    midpoints:
+      perinatal: 0.0
+      infancy: 0.5
+      childhood: 6.0
+      adolescent: 15.0
+      adult: 45.0
+  # Diseases annotated only as spanning all ages carry no ordinal position and
+  # are excluded from the primary axis. Including them at the midpoint of their
+  # span is a pre-registered robustness arm, not a judgement call made later.
+  all_ages_robustness_arm: true
+
+  # The complex-disease tier, from FinnGen through Risteys.
+  t2:
+    # Below this many cases the published distribution is too coarse to read an
+    # onset from, given that Risteys floors its bars at five individuals.
+    min_cases: 100
+    # A cumulative incidence with fewer points than this cannot be
+    # differentiated into a hazard without inventing structure.
+    min_cif_points: 10
+    # Share of first events falling in the earliest calendar bin above which the
+    # endpoint is flagged for left truncation. Events piling up at the start of
+    # the recording window is the signature of truncation, not of early onset.
+    max_first_year_share: 0.25
+
+# Age of onset is undefined for a measurement. The Ontology of Biological
+# Attributes is the largest namespace in the Platform disease index and holds
+# traits such as lipid levels and blood cell counts. Those terms are excluded
+# from the onset analysis and retained as a negative control, on which no score
+# should show an onset gradient because there is no onset to gradient against.
+namespace_policy:
+  onset_analysis_exclude_prefixes: [OBA]
+  negative_control_prefixes: [OBA]
+
+evidence_sources:
+  a_mendelian:
+    label: "Orphanet and OMIM Mendelian"
+    primary: true
+  b_gwas:
+    label: "Open Targets GWAS credible sets"
+    l2g_threshold: 0.5
+    primary: true
+    note: "A stricter cut on the Open Targets default of 0.05."
+  c_clinvar:
+    label: "Open Targets ClinVar and somatic"
+    primary: false
+    note: "Circularity control. ACMG PP3 and BP4 use conservation evidence, so
+      this source is partly defined by one arm of the contrast."
+  d_gene_burden:
+    label: "Open Targets gene burden"
+    primary: false
+
+scores:
+  constraint:
+    primary: s_het
+    secondary: [loeuf, pli, missense_z]
+  conservation:
+    primary: phylop_241way
+    secondary: [phylop_100way, phastcons_100way]
+  model_derived:
+    primary: evo2
+    validation: evo2_validation
+  reported_separately:
+    - alphamissense_gene_mean
+
+conservation_aggregation:
+  primary: fraction_above_threshold
+  secondary: mean_z_fourfold_degenerate
+  # The threshold is per track because the tracks are not on a common scale.
+  # phyloP is a signed log p-value, so 2.0 is the conventional two-sided
+  # significance cut at p = 0.01. phastCons is a posterior probability bounded
+  # in [0, 1], where 2.0 is unreachable and would silently return zero for every
+  # gene. The aggregation refuses to run when a threshold falls outside the
+  # range the track actually takes.
+  thresholds:
+    phylop_241way: 2.0
+    phylop_100way: 2.0
+    phastcons_100way: 0.8
+
+baseline_features:
+  - gtex_mean_expression
+  - expression_breadth_tau
+  - tissue_specific_expression
+  - ppi_degree
+  - ppi_betweenness
+  - depmap_gene_effect
+  - depmap_common_essential
+  - cds_length
+  - expected_lof_count
+  - gc_content
+
+confounders:
+  - cds_length_decile
+  - expected_lof_count_decile
+  - gc_content
+
+matching:
+  k: 10
+  covariates: [cds_length_decile, expected_lof_count_decile, gc_content]
+  with_replacement: false
+  within: disease
+  smd_threshold: 0.1
+
+model:
+  family: binomial
+  link: logit
+  random_effects: [disease, gene]
+  fixed_effects:
+    - evidence_source
+    - therapy_area
+    - log_n_genes_per_disease
+  onset_terms: [linear, monotone_spline]
+  spline_df: 4
+  engine: glmmTMB
+  cross_check: statsmodels_mixedlm
+  minimum_genes_per_disease: null   # No filter on the estimand.
+
+estimands:
+  gamma:
+    definition: "gamma_conservation minus gamma_constraint"
+    alpha: 0.025
+  log_r_slope:
+    definition: "slope of log R(d) on onset, R = (AUC_M1 - 0.5) / (AUC_M0 - 0.5)"
+    alpha: 0.025
+    auc_m0_floor: 0.05
+    cv_folds: 5
+    cv_stratified: true
+
+permutation:
+  n: 1000
+  strata: [evidence_source, therapy_area]
+
+controls:
+  negative: [cds_length_only, tissue_specific_expression]
+  positive: [developmental_expression]
+  placebo: [permuted_onset]
+
+power_simulation:
+  # Gamma in AUROC-equivalent units. The main effect is not guessed: it is
+  # calibrated from the pooled marginal discrimination of s_het and LOEUF on
+  # the realised Orphanet gene set against matched controls. The score by onset
+  # interaction is not fitted at that step, and the pre-registration records
+  # that it was not inspected.
+  deltas: [0.0, 0.01, 0.02, 0.03, 0.05, 0.08, 0.10]
+  replicates: 1000
+  target_power: 0.80
+  arms: [mendelian, projected_combined]
+
+# kappa_d, the per-case reduction in residual reproduction. Orphanet publishes
+# no age of death and the HPO age-of-death branch reaches under one percent of
+# the onset-annotated diseases, so kappa_d is built as an index over three
+# components rather than measured directly. A constant kappa_d would make s_d a
+# monotone transform of onset and H4 vacuous by construction.
+#
+# HPO concepts are named, never written as identifiers. They are resolved
+# against hp.obo at load time and the resolved identifier is carried into the
+# output.
+severity_index:
+  # Fraction of remaining reproduction removed when the feature is present with
+  # certainty. Multiplied by the Orphanet annotation frequency.
+  fertility_terms:
+    Infertility: 1.0
+    Azoospermia: 1.0
+    Gonadal dysgenesis: 0.9
+    Primary amenorrhea: 0.9
+    Hypogonadotropic hypogonadism: 0.8
+    Hypogonadism: 0.7
+    Oligozoospermia: 0.5
+    Decreased fertility: 0.5
+  # Orphanet frequency labels mapped to the midpoint of the interval each names.
+  frequency_weights:
+    "Obligate (100%)": 1.0
+    "Very frequent (99-80%)": 0.895
+    "Frequent (79-30%)": 0.545
+    "Occasional (29-5%)": 0.17
+    "Very rare (<4-1%)": 0.025
+    "Excluded (0%)": 0.0
+  # Care burden proxy: how many top-level organ systems a disease touches, and
+  # whether it involves the intellectual disability branch.
+  organ_system_root: Phenotypic abnormality
+  intellectual_disability_term: Intellectual disability
+  # A raw count of affected organ systems correlates 0.79 with the number of
+  # annotations a disease carries, so it measures curation depth as much as
+  # burden. Breadth is rarefied to a fixed annotation depth to remove that.
+  # Ten sits below the first quartile of annotation counts, so most diseases
+  # are compared without extrapolation.
+  rarefaction_depth: 10
+  care_burden_weight: 0.3
+  intellectual_disability_weight: 0.25
+  # The three components combine as a bounded sum, since they remove
+  # overlapping rather than additive shares of reproduction.
+  combine: bounded_sum
+
+fitness_cost:
+  # Hamilton selection gradient. The discount term is not optional; an earlier
+  # draft of this project omitted it and there is a regression test for it.
+  intrinsic_growth_rate: 0.0
+  max_age: 100
+  # Finland, because the complex-disease hazards come from FinnGen and taking
+  # the demography from the same population keeps both halves of s_d on a
+  # common footing. A world schedule is a sensitivity arm.
+  demography_location: Finland
+  demography_year: 2020
+  # The one-sex gradient runs on the maternal line, so m(x) must be daughters
+  # per woman per year. WPP publishes age-specific fertility as all births per
+  # woman, which is roughly twice that and would put the net reproduction rate
+  # above one for a population that is not replacing itself. The sex ratio at
+  # birth is close to 105 males per 100 females, so the female share is
+  # 100 / 205. Replace with the country-specific ratio if the sensitivity band
+  # turns out to matter.
+  female_birth_fraction: 0.4878
+  demography:
+    modern: [hmd, un_wpp]
+    ancestral: [gurven_kaplan_forager]
+  two_sex: true
+  kin_effects: true
+  # A modern to ancestral correlation above this value means the hazard
+  # conversion was skipped and modern cumulative incidence was multiplied by an
+  # ancestral life table.
+  modern_ancestral_correlation_ceiling: 0.95
+
+thresholds:
+  # Minimum sizes the analysis set has to reach for the design to be estimable,
+  # applied to the Mendelian arm, which is assembled in ORPHA space directly
+  # from the Orphanet gene product and depends on no crosswalk.
+  analysis_set:
+    min_diseases_with_onset_and_gene: 2000
+    min_age_of_death_coverage: 0.40
+    min_mondo_resolution: 0.95
+    crosstab_pass:
+      min_onset_bins_per_source: 3
+      min_diseases_per_bin: 100
+      min_pairs_per_bin: 500
+    pivotal_cell:
+      name: adult_onset_mendelian
+      min_diseases: 150
+  evo2_validation:
+    reference_auroc: 0.66
+    tolerance: 0.03
+    retries: 1
+  controls:
+    positive_control_required: true
+    permutation_null_centred: true
+
+presentation:
+  per_disease_auroc_min_positives: 10

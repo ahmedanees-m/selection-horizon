@@ -1,0 +1,37 @@
+# Data licensing and redistribution
+
+Code in this repository is MIT licensed. Data is not. This file records, per
+source, what may be redistributed and under which terms. `data/MANIFEST.json`
+carries the same flag per retrieved file, and the pre-release audit checks the
+two against each other before anything is deposited.
+
+Derived aggregates produced by this project are released under CC-BY-4.0 where
+the upstream terms permit it. Where they do not, the release carries the code
+that produces the aggregate and not the aggregate itself.
+
+| Source | Terms | Redistribution |
+|---|---|---|
+| Open Targets Platform 26.06 | CC0-1.0 | Permitted with attribution |
+| Orphanet and Orphadata | Orphanet terms of use | Attribution required. Inputs are not mirrored; derived onset tiers are released with attribution |
+| Human Phenotype Ontology | HPO licence | Permitted with attribution |
+| Mondo Disease Ontology | CC-BY-4.0 | Permitted with attribution |
+| gnomAD v2.1.1 and v4.1 constraint | Free use with attribution | Permitted |
+| GeneBayes s_het (Zenodo 10.5281/zenodo.10403680) | CC-BY-4.0 | Permitted with attribution |
+| UCSC conservation tracks | UCSC Genome Browser terms | Inputs not redistributed. Per-gene aggregates are released |
+| GENCODE | Free with attribution | Permitted |
+| GTEx, DepMap | Respective portal terms | Per-gene aggregates only |
+| Citeline Pharmaprojects, reached through the Minikel genetic support release | Proprietary | Nothing beyond what the upstream derived release already contains |
+| FinnGen and Risteys | Confirm before deposit | Held pending written confirmation of terms for median-age and cumulative-incidence tables |
+| Kuan et al. 2019 supplement | Journal supplement terms | Not redistributed |
+| Human Mortality Database | Registration required | Not redistributed. Derived life-table summaries only |
+| UN World Population Prospects | CC-BY-3.0-IGO | Permitted with attribution |
+| Forager demography, Gurven and Kaplan 2007 | Journal terms | Transcribed schedules cited, not redistributed |
+| UMLS Metathesaurus | Licence required | The API key is a secret and never enters the repository. Mapping outputs are released where the licence permits; the Metathesaurus is not |
+| Evo 2 model weights | Model licence | Weights are not redistributed. Per-gene scores computed by this project are released with the model licence stated in the deposit README |
+
+## Secrets
+
+No credential belongs in this repository. The UMLS key and any API tokens are
+read from the environment and injected in continuous integration through
+repository secrets. A pre-commit hook scans staged content for key-shaped
+strings.

@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+title: Selection Horizon
+message: Please cite this repository if you use the code or the derived tables.
+type: software
+authors:
+  - family-names: Mahaboob Ali
+    given-names: Anees Ahmed
+    email: ahmedaneesm@gmail.com
+repository-code: https://github.com/ahmedanees-m/selection-horizon
+license: MIT
+identifiers:
+  - type: doi
+    value: 10.17605/OSF.IO/CBS8Q
+    description: Pre-registration, filed 2026-08-29
+version: 0.1.0
+date-released: 2026-08-26
+abstract: >-
+  Onset-stratified evaluation of gene-level evolutionary scores. Measures how
+  the discriminative power of deep-time conservation and recent human
+  population constraint changes with disease age of onset, and what those
+  scores add over a non-evolutionary baseline.
+keywords:
+  - human genetics
+  - purifying selection
+  - gene constraint
+  - sequence conservation
+  - target prioritisation

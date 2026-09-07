@@ -1,0 +1,61 @@
+# Crosswalk rules and manual adjudications.
+#
+# Append only. An entry is never edited once the mapping it governs has entered
+# a released table; a correction is a new entry with a later date and a reason.
+#
+# Automated mapping runs first and attaches a confidence to every mapping.
+# Manual adjudication then covers the top 200 indications by programme count in
+# the relative-success dataset, and any FinnGen endpoint with more than 5,000
+# cases that enters the primary analysis.
+
+target_vocabulary: platform_disease_id
+
+# The Platform disease index is a mixed namespace. Mondo is used where the
+# Platform assigns it; EFO and OBA terms are retained rather than filtered.
+namespace_policy:
+  keep_prefixes: [MONDO, EFO, OBA, Orphanet, HP]
+  drop_prefixes: []
+  assert_row_counts: true
+
+legs:
+  orpha_to_platform:
+    route: platform_disease_index_dbxrefs
+    confidence: high
+    automated: true
+  orpha_to_omim:
+    route: orphanet_product1
+    confidence: high
+    automated: true
+  orpha_to_mesh:
+    route: orphanet_product1
+    confidence: high
+    automated: true
+  orpha_to_icd10:
+    route: orphanet_product1
+    confidence: medium
+    automated: true
+    note: >
+      Orphanet records an ICD relation alongside each mapping. Only Exact and
+      NTBT relations are used without adjudication; BTNT and ND relations are
+      adjudicated before entering the primary analysis.
+  mesh_to_platform:
+    route: orphanet_mesh_xrefs_then_umls
+    confidence: low
+    automated: partial
+    note: "UMLS requires a licence. The key is read from UMLS_API_KEY and never stored."
+  icd10_to_platform:
+    route: orphanet_icd10_xrefs_then_manual
+    confidence: low
+    automated: partial
+    note: >
+      FinnGen endpoints are curated composites of several ICD codes and do not
+      map one to one. Every endpoint entering the primary analysis is
+      adjudicated by hand.
+  kuan_to_platform:
+    route: manual
+    confidence: medium
+    automated: false
+    note: "308 conditions, bounded manual effort."
+
+# Manual decisions. Each entry records the date, the mapping, and why.
+adjudications: []
