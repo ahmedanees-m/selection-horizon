@@ -1,0 +1,30 @@
+# Data licensing and redistribution
+
+Code in this repository is MIT licensed. Data is not. This file records, per
+source, what may be redistributed and under which terms. `data/MANIFEST.json`
+carries the same flag per retrieved file.
+
+Derived aggregates produced by this project are released under CC-BY-4.0 where
+the upstream terms permit it. Where they do not, the release carries the code
+that produces the aggregate and not the aggregate itself.
+
+| Source | Terms | Redistribution |
+|---|---|---|
+| Open Targets Platform 26.06 | CC0-1.0 | Permitted with attribution |
+| Orphanet and Orphadata | CC-BY-4.0 | Permitted with attribution. Inputs are not mirrored; derived onset tiers are released with attribution |
+| Human Phenotype Ontology | HPO licence | Permitted with attribution |
+| Mondo Disease Ontology | CC-BY-4.0 | Permitted with attribution |
+| Gene Ontology | CC-BY-4.0 | Permitted with attribution |
+| gnomAD v2.1.1 and v4.1 constraint | Free use with attribution | Permitted |
+| GeneBayes s_het (Zenodo 10.5281/zenodo.10403680) | CC-BY-4.0 | Permitted with attribution |
+| UCSC conservation tracks | UCSC Genome Browser terms | Inputs not redistributed. Per-gene aggregates are released |
+| GENCODE | Free with attribution | Permitted |
+| GTEx, DepMap | Respective portal terms | Per-gene aggregates only |
+| Spence et al. 2025 per-gene trait effects | MIT | Permitted |
+| BetaScan2 standardised B2 (Zenodo 10.5281/zenodo.7842447) | CC-BY-4.0 | Inputs not mirrored. Per-gene aggregates only |
+| FinnGen Risteys | Risteys terms of use | Retrieved by code. Registry tables are not redistributed |
+| Kuan et al. 2019 supplement | CC-BY-4.0 | Not mirrored |
+| Human Mortality Database | Registration required | Not redistributed. Derived life-table summaries only |
+| UN World Population Prospects | CC-BY-3.0-IGO | Permitted with attribution |
+| Forager demography, Gurven and Kaplan 2007 | Journal terms | Transcribed schedules cited, not redistributed |
+| Evo 2 model weights | Model licence | Weights are not redistributed. Per-gene scores are released with the model named in the file header |

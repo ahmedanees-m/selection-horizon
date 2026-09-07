@@ -1,0 +1,35 @@
+FROM nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        python3.11 \
+        python3.11-dev \
+        python3-pip \
+        git \
+        ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -sf /usr/bin/python3.11 /usr/local/bin/python
+
+RUN python -m pip install --upgrade pip setuptools wheel
+
+# The RTX A4000 is compute capability 8.6, so the FP8 path is unavailable and
+# the build targets bfloat16 on Ampere. See docs/decisions.md.
+ENV TORCH_CUDA_ARCH_LIST="8.6"
+
+RUN python -m pip install \
+        torch==2.4.1 --index-url https://download.pytorch.org/whl/cu124
+
+RUN python -m pip install \
+        numpy \
+        pandas \
+        pyarrow \
+        biopython \
+        huggingface_hub \
+        transformers \
+        einops \
+        tqdm
+
+WORKDIR /work

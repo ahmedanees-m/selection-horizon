@@ -1,0 +1,35 @@
+{
+  "title": "Selection Horizon: onset-stratified evaluation of gene-level evolutionary scores",
+  "description": "<p>Analysis code for an onset-stratified comparison of gene-level evolutionary scores in Mendelian and complex disease. The pipeline assembles disease-gene sets with age-of-onset annotation, builds evolutionary and non-evolutionary feature matrices, and fits logistic models with cluster-robust inference over disease and gene, estimating how the discriminative value of cross-species conservation and human-population constraint changes with age of onset and what those scores add over a non-evolutionary baseline.</p>",
+  "upload_type": "software",
+  "license": "MIT",
+  "access_right": "open",
+  "creators": [
+    {
+      "name": "Mahaboob Ali, Anees Ahmed",
+      "affiliation": "School of Bio Sciences and Technology, Vellore Institute of Technology, Vellore, India"
+    }
+  ],
+  "keywords": [
+    "human genetics",
+    "purifying selection",
+    "gene constraint",
+    "sequence conservation",
+    "age of onset",
+    "disease gene prioritisation"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "10.17605/OSF.IO/CBS8Q",
+      "relation": "isSupplementTo",
+      "scheme": "doi"
+    },
+    {
+      "identifier": "10.5281/zenodo.23125599",
+      "relation": "isSupplementedBy",
+      "scheme": "doi"
+    }
+  ],
+  "version": "1.0.0",
+  "publication_date": "2026-09-17"
+}
